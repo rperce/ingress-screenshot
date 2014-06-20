@@ -18,6 +18,14 @@ opts = OptionParser.new do |opts|
     opts.parse!
 end
 @DEFAULT_YAML = {
+    'interval' => {
+        '1000' => 600,
+        '1100' => 300,
+        '1145' => 60,
+        '1215' => 300,
+        '1300' => "end"
+    },
+    'folder'            => 'default',
     'ff_profile'        => 'example',
     'ff_profile_dir'    => 'et9az2vp.example',
     'ff_wait'           => 42,
@@ -29,14 +37,7 @@ end
     'ss_height'         => 720,
     'ss_offset_left'    => 220,
     'ss_offset_top'     => 220,
-    'timestamp'         => false,
-    'interval' => {
-        '1000' => 600,
-        '1100' => 300,
-        '1145' => 60,
-        '1215' => 300,
-        '1300' => "end"
-    }
+    'timestamp'         => false
 }
 
 cfg = {}
@@ -64,7 +65,7 @@ if cfg.empty? then
     exit(1)
 end
 
-puts "Starting XVFB on #{cfg['xvfb_display']}"
+puts "Starting XVFB on :#{cfg['xvfb_display']}"
 `Xvfb :#{cfg['xvfb_display']} -screen 0 #{cfg['xvfb_res_width']}x#{cfg['xvfb_res_height']}x24 -noreset -nolisten tcp 2> /dev/null &`
 xvfb_pid = $?.pid
 
@@ -83,41 +84,41 @@ left = DateTime.strptime("#{cfg['interval'].keys[0]} #{zone}",'%H%M %z') - DateT
 left = 1+left if left < 0
 left = (left * 24 * 60 * 60).to_i
 while left > 0 do
-    p "\rWaiting for #{left} seconds...                "
+    print "\rWaiting for #{left} seconds...                "
     left -= 5
-    sleep 5
+    sleep [5, left].min
 end
-
+puts '', ''
 
 timeindex = 1
 loop do
     `rm ~/.mozilla/firefox/#{cfg['ff_profile_dir']}/.parentlock`
 
-    puts "Running firefox -P #{cfg['ff_profile']} on #{cfg['xvfb_display']}"
-    `:#{cfg['xvfb_display']} firefox -P #{cfg['ff_profile']} -width #{cfg['xvfb_res_width']} -height #{cfg['xvfb_res_height']} "#{cfg['ff_url']}" > /dev/null &`
+    puts "Running 'firefox -P #{cfg['ff_profile']}' on :#{cfg['xvfb_display']}"
+    `DISPLAY=:#{cfg['xvfb_display']} firefox -P #{cfg['ff_profile']} -width #{cfg['xvfb_res_width']} -height #{cfg['xvfb_res_height']} "#{cfg['ff_url']}" > /dev/null &`
     ff_pid = $?.pid
 
-    puts "Firefox running on pid #{ff_pid}, waiting #{cfg['ff_wait']} seconds"
+    puts "Firefox running on pid #{ff_pid}, waiting #{cfg['ff_wait']} seconds for it to load"
     sleep(cfg['ff_wait'])
 
     ham_date = `date +"%Y-%m-%d_%H-%M-%S"`
-    puts "Taking screenshot: #{ham_date}"
-    `:#{cfg['xvfb_display']} import -window root -crop #{cfg['ss_width']}x#{cfg['ss_height']}+#{cfg['ss_offset_left']}+#{cfg['ss_offset_top']} "ingr-#{ham_date}.png"`
-    add_timestamp "ingr-#{ham_date}.png" if cfg['timestamp']
+    puts "Taking screenshot: #{cfg['folder']}/#{ham_date}"
+    `DISPLAY=:#{cfg['xvfb_display']} import -window root -crop #{cfg['ss_width']}x#{cfg['ss_height']}+#{cfg['ss_offset_left']}+#{cfg['ss_offset_top']} "#{cfg['folder']}/ingr-#{ham_date}.png"`
+    add_timestamp "#{cfg['folder']}/ingr-#{ham_date}.png" if cfg['timestamp']
 
     puts "Killing firefox on PID #{ff_pid}"
     `kill #{ff_pid}`
 
     if DateTime.strptime("#{cfg['interval'].keys[timeindex]} #{zone}",'%H%M %z') - DateTime.now < 0 then
-        timeindex += 1
         delay = cfg['interval'].values[timeindex]
+        timeindex += 1
     end
     if delay == "end" then
         puts "Completed"
         break
     end
 
-    puts "Waiting #{delay} for next screenshot"
+    puts "Waiting #{delay} for next screenshot", ''
     sleep(delay)
 end
 
