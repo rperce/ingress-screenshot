@@ -20,7 +20,8 @@ With the above in hand, edit the newly created `default.cfg` to your liking and 
 The configuration options are detailed below.
 
 Finally, run the software with 
-    ./run.rb -c &lt;config&gt;
+
+    ./run.rb -c <config>
 
 Configuration
 -------------
