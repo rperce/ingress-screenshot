@@ -1,11 +1,14 @@
 Ingress Screnshot
 =================
 
-To get started, clone this repository with 
+To get started, clone this repository with
+
     git clone https://github.com/rperce/ingress-screenshot.git
+
 and then `cd` into the new `ingress-screenshot` directory.
 
 Run the following to get set up:
+
     chmod +x run.rb
     ./run.rb -g
 
@@ -15,6 +18,9 @@ You'll also need to know the url of the view you wish to screenshot.
 
 With the above in hand, edit the newly created `default.cfg` to your liking and name it something unique.
 The configuration options are detailed below.
+
+Finally, run the software with 
+    ./run.rb -c <config>
 
 Configuration
 -------------
